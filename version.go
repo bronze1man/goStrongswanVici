@@ -1,27 +1,19 @@
 package goStrongswanVici
 
 type Version struct {
-	Daemon  string
-	Version string
-	Sysname string
-	Release string
-	Machine string
+	Daemon  string `json:"daemon"`
+	Version string `json:"version"`
+	Sysname string `json:"sysname"`
+	Release string `json:"release"`
+	Machine string `json:"machine"`
 }
 
 func (c *Client) Version() (out *Version, err error) {
-	err = handlePanic(func() (err error) {
-		msg, err := c.Request("version", nil)
-		if err != nil {
-			return
-		}
-		out = &Version{
-			Daemon:  msg["daemon"].(string),
-			Version: msg["version"].(string),
-			Sysname: msg["sysname"].(string),
-			Release: msg["release"].(string),
-			Machine: msg["machine"].(string),
-		}
+	msg, err := c.Request("version", nil)
+	if err != nil {
 		return
-	})
+	}
+	out = &Version{}
+	err = ConvertFromGeneral(msg, out)
 	return
 }

@@ -23,8 +23,9 @@ func (c *Client) Close() error {
 
 func NewClient(conn net.Conn) (client *Client) {
 	client = &Client{
-		conn:         conn,
-		responseChan: make(chan segment, 2),
+		conn:          conn,
+		responseChan:  make(chan segment, 2),
+		eventHandlers: map[string]func(response map[string]interface{}){},
 	}
 	go client.readThread()
 	return client
@@ -41,13 +42,14 @@ func NewClientFromDefaultSocket() (client *Client, err error) {
 func (c *Client) Request(apiname string, request map[string]interface{}) (response map[string]interface{}, err error) {
 	err = writeSegment(c.conn, segment{
 		typ:  stCMD_REQUEST,
-		name: "version",
+		name: apiname,
 		msg:  request,
 	})
 	if err != nil {
 		return
 	}
 	outMsg := <-c.responseChan
+	//fmt.Printf("request %#v\n", outMsg)
 	if c.lastError != nil {
 		return nil, c.lastError
 	}
@@ -71,6 +73,7 @@ func (c *Client) RegisterEvent(name string, handler func(response map[string]int
 		return
 	}
 	outMsg := <-c.responseChan
+	//fmt.Printf("registerEvent %#v\n", outMsg)
 	if c.lastError != nil {
 		delete(c.eventHandlers, name)
 		return c.lastError
@@ -92,6 +95,7 @@ func (c *Client) UnregisterEvent(name string) (err error) {
 		return
 	}
 	outMsg := <-c.responseChan
+	//fmt.Printf("UnregisterEvent %#v\n", outMsg)
 	if c.lastError != nil {
 		return c.lastError
 	}
