@@ -8,7 +8,7 @@ type Version struct {
 	Machine string `json:"machine"`
 }
 
-func (c *Client) Version() (out *Version, err error) {
+func (c *ClientConn) Version() (out *Version, err error) {
 	msg, err := c.Request("version", nil)
 	if err != nil {
 		return

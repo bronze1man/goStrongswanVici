@@ -8,21 +8,21 @@ import (
 
 // This object is not thread safe.
 // if you want concurrent, you need create more clients.
-type Client struct {
+type ClientConn struct {
 	conn          net.Conn
 	responseChan  chan segment
 	eventHandlers map[string]func(response map[string]interface{})
 	lastError     error
 }
 
-func (c *Client) Close() error {
+func (c *ClientConn) Close() error {
 	close(c.responseChan)
 	c.lastError = io.ErrClosedPipe
 	return c.conn.Close()
 }
 
-func NewClient(conn net.Conn) (client *Client) {
-	client = &Client{
+func NewClientConn(conn net.Conn) (client *ClientConn) {
+	client = &ClientConn{
 		conn:          conn,
 		responseChan:  make(chan segment, 2),
 		eventHandlers: map[string]func(response map[string]interface{}){},
@@ -31,15 +31,16 @@ func NewClient(conn net.Conn) (client *Client) {
 	return client
 }
 
-func NewClientFromDefaultSocket() (client *Client, err error) {
+// it dial from unix:///var/run/charon.vici
+func NewClientConnFromDefaultSocket() (client *ClientConn, err error) {
 	conn, err := net.Dial("unix", "/var/run/charon.vici")
 	if err != nil {
 		return
 	}
-	return NewClient(conn), nil
+	return NewClientConn(conn), nil
 }
 
-func (c *Client) Request(apiname string, request map[string]interface{}) (response map[string]interface{}, err error) {
+func (c *ClientConn) Request(apiname string, request map[string]interface{}) (response map[string]interface{}, err error) {
 	err = writeSegment(c.conn, segment{
 		typ:  stCMD_REQUEST,
 		name: apiname,
@@ -59,7 +60,7 @@ func (c *Client) Request(apiname string, request map[string]interface{}) (respon
 	return outMsg.msg, nil
 }
 
-func (c *Client) RegisterEvent(name string, handler func(response map[string]interface{})) (err error) {
+func (c *ClientConn) RegisterEvent(name string, handler func(response map[string]interface{})) (err error) {
 	if c.eventHandlers[name] != nil {
 		return fmt.Errorf("[event %s] register a event twice.", name)
 	}
@@ -86,7 +87,7 @@ func (c *Client) RegisterEvent(name string, handler func(response map[string]int
 	return nil
 }
 
-func (c *Client) UnregisterEvent(name string) (err error) {
+func (c *ClientConn) UnregisterEvent(name string) (err error) {
 	err = writeSegment(c.conn, segment{
 		typ:  stEVENT_UNREGISTER,
 		name: name,
@@ -107,7 +108,7 @@ func (c *Client) UnregisterEvent(name string) (err error) {
 	return nil
 }
 
-func (c *Client) readThread() {
+func (c *ClientConn) readThread() {
 	for {
 		outMsg, err := readSegment(c.conn)
 		if err != nil {

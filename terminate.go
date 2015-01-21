@@ -15,7 +15,7 @@ type TerminateRequest struct {
 
 // To be simple, kill a client that is connecting to this server. A client is a sa.
 //Terminates an SA while streaming control-log events.
-func (c *Client) Terminate(r *TerminateRequest) (err error) {
+func (c *ClientConn) Terminate(r *TerminateRequest) (err error) {
 	err = handlePanic(func() (err error) {
 		reqMap := &map[string]interface{}{}
 		ConvertToGeneral(r, reqMap)

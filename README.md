@@ -7,9 +7,11 @@ strongswan vici golang client
 
 a golang implement of strongswan vici plugin client.
 
-### This project is under development.
-
 ### document
 http://godoc.org/github.com/bronze1man/goStrongswanVici
 https://github.com/strongswan/strongswan/tree/master/src/libcharon/plugins/vici
 
+### Implemented command list
+* version()
+* list-sas()
+* terminate()

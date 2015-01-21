@@ -60,7 +60,7 @@ type Child_sas struct {
 // To be simple, list all clients that are connecting to this server .
 // A client is a sa.
 // Lists currently active IKE_SAs
-func (c *Client) ListSas(ike string, ike_id string) (sas []map[string]IkeSa, err error) {
+func (c *ClientConn) ListSas(ike string, ike_id string) (sas []map[string]IkeSa, err error) {
 	sas = []map[string]IkeSa{}
 	var eventErr error
 	//register event
@@ -110,7 +110,7 @@ type VpnConnInfo struct {
 }
 
 // a helper method to avoid complex data struct in ListSas
-func (c *Client) ListAllVpnConnInfo() (list []VpnConnInfo, err error) {
+func (c *ClientConn) ListAllVpnConnInfo() (list []VpnConnInfo, err error) {
 	sasList, err := c.ListSas("", "")
 	if err != nil {
 		return
