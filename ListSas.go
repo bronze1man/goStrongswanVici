@@ -2,6 +2,7 @@ package goStrongswanVici
 
 import (
 	"fmt"
+	"strconv"
 )
 
 //from list-sa event
@@ -57,6 +58,22 @@ type Child_sas struct {
 	Install_time  string `json:"install-time"`
 }
 
+func (s *Child_sas) GetBytesIn() uint64 {
+	num, err := strconv.ParseUint(s.Bytes_in, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+func (s *Child_sas) GetBytesOut() uint64 {
+	num, err := strconv.ParseUint(s.Bytes_out, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
 // To be simple, list all clients that are connecting to this server .
 // A client is a sa.
 // Lists currently active IKE_SAs
@@ -109,7 +126,18 @@ type VpnConnInfo struct {
 	ChildSaName string //looks like conn name in ipsec.conf
 }
 
+func (c *VpnConnInfo) GuessUserName() string {
+	if c.Remote_xauth_id != "" {
+		return c.Remote_xauth_id
+	}
+	if c.Remote_id != "" {
+		return c.Remote_id
+	}
+	return ""
+}
+
 // a helper method to avoid complex data struct in ListSas
+// if it only have one child_sas ,it will put it into info.Child_sas
 func (c *ClientConn) ListAllVpnConnInfo() (list []VpnConnInfo, err error) {
 	sasList, err := c.ListSas("", "")
 	if err != nil {
@@ -119,14 +147,14 @@ func (c *ClientConn) ListAllVpnConnInfo() (list []VpnConnInfo, err error) {
 	for i, sa := range sasList {
 		info := VpnConnInfo{}
 		if len(sa) != 1 {
-			fmt.Printf("[vici.ListAllVpnConnInfo] warning: len(sa)[%d]>1\n", len(sa))
+			fmt.Printf("[vici.ListAllVpnConnInfo] warning: len(sa)[%d]!=1\n", len(sa))
 		}
 		for ikeSaName, ikeSa := range sa {
 			info.IkeSaName = ikeSaName
 			info.IkeSa = ikeSa
-			if len(ikeSa.Child_sas) != 1 {
-				fmt.Println("[vici.ListAllVpnConnInfo] warning: len(ikeSa.Child_sas)[%d]>1", len(ikeSa.Child_sas))
-			}
+			//if len(ikeSa.Child_sas) != 1 {
+			//	fmt.Println("[vici.ListAllVpnConnInfo] warning: len(ikeSa.Child_sas)[%d]!=1", len(ikeSa.Child_sas))
+			//}
 			for childSaName, childSa := range ikeSa.Child_sas {
 				info.ChildSaName = childSaName
 				info.Child_sas = childSa
@@ -134,7 +162,9 @@ func (c *ClientConn) ListAllVpnConnInfo() (list []VpnConnInfo, err error) {
 			}
 			break
 		}
-		info.IkeSa.Child_sas = nil
+		if len(info.IkeSa.Child_sas) == 1 {
+			info.IkeSa.Child_sas = nil
+		}
 		list[i] = info
 	}
 	return

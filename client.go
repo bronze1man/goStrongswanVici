@@ -1,131 +1,79 @@
 package goStrongswanVici
 
 import (
-	"fmt"
-	"io"
 	"net"
 )
 
-// This object is not thread safe.
-// if you want concurrent, you need create more clients.
-type ClientConn struct {
-	conn          net.Conn
-	responseChan  chan segment
-	eventHandlers map[string]func(response map[string]interface{})
-	lastError     error
+type ClientOptions struct {
+	Network string
+	Addr    string
+	// Dialer creates new network connection and has priority over
+	// Network and Addr options.
+	Dialer func() (net.Conn, error)
 }
 
-func (c *ClientConn) Close() error {
-	close(c.responseChan)
-	c.lastError = io.ErrClosedPipe
-	return c.conn.Close()
+type Client struct {
+	o ClientOptions
 }
 
-func NewClientConn(conn net.Conn) (client *ClientConn) {
-	client = &ClientConn{
-		conn:          conn,
-		responseChan:  make(chan segment, 2),
-		eventHandlers: map[string]func(response map[string]interface{}){},
-	}
-	go client.readThread()
-	return client
-}
-
-// it dial from unix:///var/run/charon.vici
-func NewClientConnFromDefaultSocket() (client *ClientConn, err error) {
-	conn, err := net.Dial("unix", "/var/run/charon.vici")
-	if err != nil {
-		return
-	}
-	return NewClientConn(conn), nil
-}
-
-func (c *ClientConn) Request(apiname string, request map[string]interface{}) (response map[string]interface{}, err error) {
-	err = writeSegment(c.conn, segment{
-		typ:  stCMD_REQUEST,
-		name: apiname,
-		msg:  request,
-	})
-	if err != nil {
-		return
-	}
-	outMsg := <-c.responseChan
-	//fmt.Printf("request %#v\n", outMsg)
-	if c.lastError != nil {
-		return nil, c.lastError
-	}
-	if outMsg.typ != stCMD_RESPONSE {
-		return nil, fmt.Errorf("[%s] response error %d", apiname, outMsg.typ)
-	}
-	return outMsg.msg, nil
-}
-
-func (c *ClientConn) RegisterEvent(name string, handler func(response map[string]interface{})) (err error) {
-	if c.eventHandlers[name] != nil {
-		return fmt.Errorf("[event %s] register a event twice.", name)
-	}
-	c.eventHandlers[name] = handler
-	err = writeSegment(c.conn, segment{
-		typ:  stEVENT_REGISTER,
-		name: name,
-	})
-	if err != nil {
-		delete(c.eventHandlers, name)
-		return
-	}
-	outMsg := <-c.responseChan
-	//fmt.Printf("registerEvent %#v\n", outMsg)
-	if c.lastError != nil {
-		delete(c.eventHandlers, name)
-		return c.lastError
-	}
-
-	if outMsg.typ != stEVENT_CONFIRM {
-		delete(c.eventHandlers, name)
-		return fmt.Errorf("[event %s] response error %d", name, outMsg.typ)
-	}
-	return nil
-}
-
-func (c *ClientConn) UnregisterEvent(name string) (err error) {
-	err = writeSegment(c.conn, segment{
-		typ:  stEVENT_UNREGISTER,
-		name: name,
-	})
-	if err != nil {
-		return
-	}
-	outMsg := <-c.responseChan
-	//fmt.Printf("UnregisterEvent %#v\n", outMsg)
-	if c.lastError != nil {
-		return c.lastError
-	}
-
-	if outMsg.typ != stEVENT_CONFIRM {
-		return fmt.Errorf("[event %s] response error %d", name, outMsg.typ)
-	}
-	delete(c.eventHandlers, name)
-	return nil
-}
-
-func (c *ClientConn) readThread() {
-	for {
-		outMsg, err := readSegment(c.conn)
-		if err != nil {
-			c.lastError = err
-			return
-		}
-		switch outMsg.typ {
-		case stCMD_RESPONSE, stEVENT_CONFIRM:
-			c.responseChan <- outMsg
-		case stEVENT:
-			handler := c.eventHandlers[outMsg.name]
-			if handler != nil {
-				handler(outMsg.msg)
-			}
-		default:
-			c.lastError = fmt.Errorf("[Client.readThread] unknow msg type %d", outMsg.typ)
-			return
+func NewClient(options ClientOptions) (client *Client) {
+	if options.Dialer == nil {
+		options.Dialer = func() (net.Conn, error) {
+			return net.Dial(options.Network, options.Addr)
 		}
 	}
+	return &Client{
+		o: options,
+	}
+}
+
+func NewClientFromDefaultSocket() (client *Client) {
+	return NewClient(ClientOptions{
+		Network: "unix",
+		Addr:    "/var/run/charon.vici",
+	})
+}
+
+func (c *Client) NewConn() (conn *ClientConn, err error) {
+	conn1, err := c.o.Dialer()
+	if err != nil {
+		return nil, err
+	}
+	return NewClientConn(conn1), nil
+}
+
+func (c *Client) ListSas(ike string, ike_id string) (sas []map[string]IkeSa, err error) {
+	conn, err := c.NewConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	return conn.ListSas(ike, ike_id)
+}
+
+func (c *Client) ListAllVpnConnInfo() (list []VpnConnInfo, err error) {
+	conn, err := c.NewConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	return conn.ListAllVpnConnInfo()
+}
+
+func (c *Client) Version() (out *Version, err error) {
+	conn, err := c.NewConn()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	return conn.Version()
+}
+
+func (c *Client) Terminate(r *TerminateRequest) (err error) {
+	conn, err := c.NewConn()
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	return conn.Terminate(r)
 }

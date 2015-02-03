@@ -4,6 +4,10 @@ strongswan vici golang client
 [![GoDoc](https://godoc.org/github.com/bronze1man/goStrongswanVici?status.svg)](https://godoc.org/github.com/bronze1man/goStrongswanVici)
 [![docs examples](https://sourcegraph.com/api/repos/github.com/bronze1man/goStrongswanVici/badges/docs-examples.png)](https://sourcegraph.com/github.com/bronze1man/goStrongswanVici)
 [![Total views](https://sourcegraph.com/api/repos/github.com/bronze1man/goStrongswanVici/counters/views.png)](https://sourcegraph.com/github.com/bronze1man/goStrongswanVici)
+[![GitHub issues](https://img.shields.io/github/issues/bronze1man/goStrongswanVici.svg)](https://github.com/bronze1man/goStrongswanVici/issues)
+[![GitHub stars](https://img.shields.io/github/stars/bronze1man/goStrongswanVici.svg)](https://github.com/bronze1man/goStrongswanVici/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/bronze1man/goStrongswanVici.svg)](https://github.com/bronze1man/goStrongswanVici/network)
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/bronze1man/goStrongswanVici/blob/master/LICENSE)
 
 a golang implement of strongswan vici plugin client.
 
