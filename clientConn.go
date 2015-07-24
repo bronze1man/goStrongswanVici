@@ -47,10 +47,11 @@ func (c *ClientConn) Request(apiname string, request map[string]interface{}) (re
 		msg:  request,
 	})
 	if err != nil {
+		fmt.Printf("error writing segment \n")
 		return
 	}
 	outMsg := <-c.responseChan
-	//fmt.Printf("request %#v\n", outMsg)
+
 	if c.lastError != nil {
 		return nil, c.lastError
 	}
