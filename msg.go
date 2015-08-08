@@ -76,24 +76,32 @@ func writeSegment(w io.Writer, msg segment) (err error) {
 	if msg.typ.hasName() {
 		err = writeString1(buf, msg.name)
 		if err != nil {
+			fmt.Printf("error returned from writeString1i \n")
 			return
 		}
 	}
+
 	if msg.typ.hasMsg() {
 		err = writeMap(buf, msg.msg)
 		if err != nil {
+			fmt.Printf("error retruned from writeMap \n")
 			return
 		}
 	}
+
 	//写长度
 	err = binary.Write(w, binary.BigEndian, uint32(buf.Len()))
 	if err != nil {
+		fmt.Printf("[writeSegment] error writing to binary \n")
 		return
 	}
+
 	_, err = buf.WriteTo(w)
 	if err != nil {
+		fmt.Printf("[writeSegment] error writing to buffer \n")
 		return
 	}
+
 	return nil
 }
 
@@ -228,6 +236,12 @@ func writeMap(w *bytes.Buffer, msg map[string]interface{}) (err error) {
 			writeKeyList(w, k, t)
 		case string:
 			writeKeyString(w, k, t)
+		case []interface{}:
+			str := make([]string, len(t))
+			for i := range t {
+				str[i] = t[i].(string)
+			}
+			writeKeyList(w, k, str)
 		default:
 			return fmt.Errorf("[writeMap] can not write type %T right now", msg)
 		}
