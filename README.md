@@ -20,6 +20,7 @@ a golang implement of strongswan vici plugin client.
 * list-sas()
 * terminate()
 * load-conn()
+* list-conns()
 * unload-conn()
 * load-shared()
 
@@ -55,12 +56,13 @@ func main(){
                 Remote_ts:     []string{"10.10.40.0/24"},
                 ESPProposals:  []string{"aes256-sha256-modp2048"},
                 StartAction:   "trap",
+		CloseAction:   "restart",
                 Mode:          "tunnel",
                 ReqID:         "10",
                 RekeyTime:     "10m",
                 InstallPolicy: "no",
         }
-        childConfMap["test-conn"] = childSAConf
+        childConfMap["test-child-conn"] = childSAConf
 
         localAuthConf := goStrongswanVici.AuthConf{
                 AuthMethod: "psk",
@@ -68,6 +70,8 @@ func main(){
         remoteAuthConf := goStrongswanVici.AuthConf{
                 AuthMethod: "psk",
         }
+
+	ikeConfMap := make(map[string] goStrongswanVici.IKEConf)
 
         ikeConf := goStrongswanVici.IKEConf{
                 LocalAddrs:  []string{"192.168.198.10"},
@@ -80,12 +84,10 @@ func main(){
                 Encap:       "no",
         }
 
-        conn := &goStrongswanVici.Connection{
-                ConnConf: ikeConf,
-        }
+	ikeConfMap["test-connection"] = ikeConf
 
 	//load connenction information into strongswan
-        err = client.LoadConn(conn)
+        err = client.LoadConn(&ikeConfMap)
         if err != nil {
                 fmt.Printf("error loading connection: %v")
                 panic(err)
@@ -104,6 +106,15 @@ func main(){
                 panic(err)
         }
 
+	//list-conns 
+	connList, err := client.ListConns("")
+	if err != nil {
+		fmt.Printf("error list-conns: %v \n", err)
+	}
+
+	for _, connection := range connList {
+		fmt.Printf("connection map: %v", connection)
+	}	
 
 	// get all conns info from strongswan
 	connInfo, err := client.ListAllVpnConnInfo()
@@ -114,14 +125,14 @@ func main(){
 
 	//unload connection from strongswan
 	unloadConnReq := &goStrongswanVici.UnloadConnRequest{
-			Name: "test-conn",
+			Name: "test-connection",
 			}
 	err = client.UnloadConn(unloadConnReq)
 	if err != nil {
 		panic(error)
 	}
 
-	// kill all conns in strongswan.
+	// kill all conns in strongswan
 	for _, info := range connInfo {
 		fmt.Printf("kill connection id %s\n", info.Uniqueid)
 		err = client.Terminate(&goStrongswanVici.TerminateRequest{
