@@ -39,6 +39,8 @@ type ChildSAConf struct {
 	RekeyTime     string   `json:"rekey_time"`
 	Mode          string   `json:"mode"`
 	InstallPolicy string   `json:"policies"`
+	UpDown        string   `json:"updown,omitempty"`
+	Priority      string   `json:"priority,omitempty"`
 }
 
 func (c *ClientConn) LoadConn(conn *map[string]IKEConf) error {
