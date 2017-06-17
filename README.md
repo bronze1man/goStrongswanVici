@@ -18,14 +18,16 @@ a golang implement of strongswan vici plugin client.
 ### Implemented command list
 * version()
 * list-sas()
+* get-shared()
 * terminate()
 * load-conn()
 * load-cert()
 * load-key()
 * load-pool()
+* load-shared()
 * list-conns()
 * unload-conn()
-* load-shared()
+* unload-shared()
 
 If you need some commands, but it is not here .you can implement yourself, and send a pull request to this project.
 
