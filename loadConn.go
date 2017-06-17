@@ -27,6 +27,7 @@ type AuthConf struct {
 	ID         string `json:"id"`
 	Round      string `json:"round,omitempty"`
 	AuthMethod string `json:"auth"` // (psk|pubkey)
+	EAP_ID     string `json:"eap_id,omitempty"`
 }
 
 type ChildSAConf struct {
