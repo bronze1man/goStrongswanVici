@@ -5,6 +5,7 @@ import (
 )
 
 type Key struct {
+	ID     string   `json:"id,omitempty"`
 	Typ    string   `json:"type"`
 	Data   string   `json:"data"`
 	Owners []string `json:"owners"`
@@ -21,7 +22,7 @@ func (c *ClientConn) LoadShared(key *Key) error {
 
 	msg, err := c.Request("load-shared", *requestMap)
 	if msg["success"] != "yes" {
-		return fmt.Errorf("unsuccessful loadSharedKey: %v", msg["success"])
+		return fmt.Errorf("unsuccessful loadSharedKey: %v", msg["errmsg"])
 	}
 
 	return nil
