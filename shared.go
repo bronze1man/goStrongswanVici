@@ -17,7 +17,7 @@ type UnloadKeyRequest struct {
 	ID string `json:"id"`
 }
 
-type KeyList struct {
+type keyList struct {
 	Keys []string `json:"keys"`
 }
 
@@ -65,7 +65,7 @@ func (c *ClientConn) GetShared() ([]string, error) {
 		return nil, err
 	}
 
-	keys := &KeyList{}
+	keys := &keyList{}
 
 	err = ConvertFromGeneral(msg, keys)
 	if err != nil {
