@@ -27,6 +27,7 @@ type AuthConf struct {
 	ID         string `json:"id"`
 	Round      string `json:"round,omitempty"`
 	AuthMethod string `json:"auth"` // (psk|pubkey)
+	EAP_ID     string `json:"eap_id,omitempty"`
 }
 
 type ChildSAConf struct {
@@ -55,7 +56,7 @@ func (c *ClientConn) LoadConn(conn *map[string]IKEConf) error {
 	msg, err := c.Request("load-conn", *requestMap)
 
 	if msg["success"] != "yes" {
-		return fmt.Errorf("unsuccessful LoadConn: %v", msg["success"])
+		return fmt.Errorf("unsuccessful LoadConn: %v", msg["errmsg"])
 	}
 
 	return nil
