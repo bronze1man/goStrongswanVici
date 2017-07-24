@@ -9,18 +9,18 @@ type Connection struct {
 }
 
 type IKEConf struct {
-	LocalAddrs  []string `json:"local_addrs"`
-	RemoteAddrs []string `json:"remote_addrs,omitempty"`
-	Proposals   []string `json:"proposals,omitempty"`
-	Version     string   `json:"version"` //1 for ikev1, 0 for ikev1 & ikev2
-	Encap       string   `json:"encap"`   //yes,no
-	KeyingTries string   `json:"keyingtries"`
-	//	RekyTime   string                 `json:"rekey_time"`
-	DPDDelay   string                 `json:"dpd_delay,omitempty"`
-	LocalAuth  AuthConf               `json:"local"`
-	RemoteAuth AuthConf               `json:"remote"`
-	Pools      []string               `json:"pools,omitempty"`
-	Children   map[string]ChildSAConf `json:"children"`
+	LocalAddrs  []string               `json:"local_addrs"`
+	RemoteAddrs []string               `json:"remote_addrs,omitempty"`
+	Proposals   []string               `json:"proposals,omitempty"`
+	Version     string                 `json:"version"` //1 for ikev1, 0 for ikev1 & ikev2
+	Encap       string                 `json:"encap"`   //yes,no
+	KeyingTries string                 `json:"keyingtries"`
+	RekeyTime   string                 `json:"rekey_time"`
+	DPDDelay    string                 `json:"dpd_delay,omitempty"`
+	LocalAuth   AuthConf               `json:"local"`
+	RemoteAuth  AuthConf               `json:"remote"`
+	Pools       []string               `json:"pools,omitempty"`
+	Children    map[string]ChildSAConf `json:"children"`
 }
 
 type AuthConf struct {
