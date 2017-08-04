@@ -38,6 +38,7 @@ type ChildSAConf struct {
 	CloseAction   string   `json:"close_action"`
 	ReqID         string   `json:"reqid"`
 	RekeyTime     string   `json:"rekey_time"`
+	ReplayWindow  string   `json:"replay_window,omitempty"`
 	Mode          string   `json:"mode"`
 	InstallPolicy string   `json:"policies"`
 	UpDown        string   `json:"updown,omitempty"`
