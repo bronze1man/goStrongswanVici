@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	timeout = 15
+	DefaultReadTimeout = 15 * time.Second
 )
 
 // This object is not thread safe.
@@ -18,6 +18,10 @@ type ClientConn struct {
 	responseChan  chan segment
 	eventHandlers map[string]func(response map[string]interface{})
 	lastError     error
+
+	// ReadTimeout specifies a time limit for requests made
+	// by this client.
+	ReadTimeout time.Duration
 }
 
 func (c *ClientConn) Close() error {
@@ -31,6 +35,7 @@ func NewClientConn(conn net.Conn) (client *ClientConn) {
 		conn:          conn,
 		responseChan:  make(chan segment, 2),
 		eventHandlers: map[string]func(response map[string]interface{}){},
+		ReadTimeout:   DefaultReadTimeout,
 	}
 	go client.readThread()
 	return client
@@ -70,7 +75,7 @@ func (c *ClientConn) readResponse() segment {
 	select {
 	case outMsg := <-c.responseChan:
 		return outMsg
-	case <-time.After(timeout * time.Second):
+	case <-time.After(c.ReadTimeout):
 		if c.lastError == nil {
 			c.lastError = fmt.Errorf("Timeout waiting for message response")
 		}
