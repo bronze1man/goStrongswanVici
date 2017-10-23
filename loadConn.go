@@ -46,6 +46,7 @@ type ChildSAConf struct {
 	MarkIn        string   `json:"mark_in,omitempty"`
 	MarkOut       string   `json:"mark_out,omitempty"`
 	DpdAction     string   `json:"dpd_action,omitempty"`
+	LifeTime      string   `json:"life_time,omitempty"`
 }
 
 func (c *ClientConn) LoadConn(conn *map[string]IKEConf) error {
