@@ -134,7 +134,7 @@ func main(){
 			}
 	err = client.UnloadConn(unloadConnReq)
 	if err != nil {
-		panic(error)
+		panic(err)
 	}
 
 	// kill all conns in strongswan
