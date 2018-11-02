@@ -7,4 +7,4 @@ go:
   - "1.11.x"
 
 script:
-  - docker-compose up -v
+  - docker-compose up
