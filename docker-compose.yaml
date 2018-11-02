@@ -12,7 +12,7 @@ services:
 
   go-test:
     build: .
-    command: "go test ./..."
+    command: "go test -v ./..."
     volumes:
       - ".:/app"
       - "charondata:/var/run"
