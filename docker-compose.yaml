@@ -10,9 +10,8 @@ services:
     volumes:
       - "charondata:/var/run"
 
-  go-test:
+  app:
     build: .
-    command: "go test -v ./..."
     volumes:
       - ".:/app"
       - "charondata:/var/run"
