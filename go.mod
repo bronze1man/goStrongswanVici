@@ -1,4 +1,4 @@
-module github.com/RenaultAI/goStrongswanVici
+module github.com/bronze1man/goStrongswanVici
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
