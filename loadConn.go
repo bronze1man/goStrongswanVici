@@ -21,7 +21,7 @@ type IKEConf struct {
 	RemoteAuth  AuthConf               `json:"remote"`
 	Pools       []string               `json:"pools,omitempty"`
 	Children    map[string]ChildSAConf `json:"children"`
-	Mobike      string                 `json:"mobike"`
+	Mobike      string                 `json:"mobike,omitempty"`
 }
 
 type AuthConf struct {
