@@ -11,6 +11,8 @@ type Connection struct {
 type IKEConf struct {
 	LocalAddrs  []string               `json:"local_addrs"`
 	RemoteAddrs []string               `json:"remote_addrs,omitempty"`
+	LocalPort   string                 `json:"local_port,omitempty"`
+	RemotePort  string                 `json:"remote_port,omitempty"`
 	Proposals   []string               `json:"proposals,omitempty"`
 	Version     string                 `json:"version"` //1 for ikev1, 0 for ikev1 & ikev2
 	Encap       string                 `json:"encap"`   //yes,no
