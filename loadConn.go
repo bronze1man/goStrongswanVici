@@ -1,6 +1,9 @@
 package goStrongswanVici
 
 import (
+	"crypto"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 )
 
@@ -24,10 +27,11 @@ type IKEConf struct {
 }
 
 type AuthConf struct {
-	ID         string `json:"id"`
-	Round      string `json:"round,omitempty"`
-	AuthMethod string `json:"auth"` // (psk|pubkey)
-	EAP_ID     string `json:"eap_id,omitempty"`
+	ID         string   `json:"id"`
+	Round      string   `json:"round,omitempty"`
+	AuthMethod string   `json:"auth"` // (psk|pubkey)
+	EAP_ID     string   `json:"eap_id,omitempty"`
+	PubKeys    []string `json:"pubkeys,omitempty"` // PEM encoded public keys
 }
 
 type ChildSAConf struct {
@@ -47,6 +51,28 @@ type ChildSAConf struct {
 	MarkOut       string   `json:"mark_out,omitempty"`
 	DpdAction     string   `json:"dpd_action,omitempty"`
 	LifeTime      string   `json:"life_time,omitempty"`
+}
+
+// SetPublicKeys is a helper method that converts Public Keys to x509 PKIX PEM format
+// Supported formats are those implemented by x509.MarshalPKIXPublicKey
+func (a *AuthConf) SetPublicKeys(keys []crypto.PublicKey) error {
+	var newKeys []string
+
+	for _, key := range keys {
+		asn1Bytes, err := x509.MarshalPKIXPublicKey(key)
+		if err != nil {
+			return fmt.Errorf("Error marshaling key: %v", err)
+		}
+		pemKey := pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: asn1Bytes,
+		}
+		pemBytes := pem.EncodeToMemory(&pemKey)
+		newKeys = append(newKeys, string(pemBytes))
+	}
+
+	a.PubKeys = newKeys
+	return nil
 }
 
 func (c *ClientConn) LoadConn(conn *map[string]IKEConf) error {
