@@ -17,6 +17,7 @@ type IKEConf struct {
 	LocalPort   string                 `json:"local_port,omitempty"`
 	RemotePort  string                 `json:"remote_port,omitempty"`
 	Proposals   []string               `json:"proposals,omitempty"`
+	Vips        []string               `json:"vips,omitempty"`
 	Version     string                 `json:"version"` //1 for ikev1, 0 for ikev1 & ikev2
 	Encap       string                 `json:"encap"`   //yes,no
 	KeyingTries string                 `json:"keyingtries"`
