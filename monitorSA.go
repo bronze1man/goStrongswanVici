@@ -36,6 +36,7 @@ type EventIkeSAUpDown struct {
 	Task_Active   []string                       `json:"tasks-active"`
 	Uniqueid      string                         `json:"uniqueid"`
 	Version       string                         `json:"version"`
+	Remote_eap_id string                         `json:"remote-eap-id"` // client user name
 }
 
 type EventChildSAUpDown struct {
