@@ -61,6 +61,7 @@ type EventChildSAUpDown struct {
 	Spi_out      string   `json:"spi-out"`
 	State        string   `json:"state"`
 	UniqueId     string   `json:"uniqueid"`
+	Remote_eap_id string                         `json:"remote-eap-id"` // client user name
 }
 
 type EventIkeRekeyPair struct {
