@@ -144,29 +144,26 @@ func (c *ClientConn) UnregisterEvent(name string) (err error) {
 
 func (c *ClientConn) readThread() {
 	for {
-		c.read(c.conn)
-	}
-}
-
-func (c *ClientConn) read(net.Conn) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	outMsg, err := readSegment(c.conn)
-	if err != nil {
-		c.lastError = err
-		return
-	}
-	switch outMsg.typ {
-	case stCMD_RESPONSE, stEVENT_CONFIRM:
-		c.responseChan <- outMsg
-	case stEVENT:
-		handler := c.eventHandlers[outMsg.name]
-		if handler != nil {
-			handler(outMsg.msg)
+		c.lock.Lock()
+		outMsg, err := readSegment(c.conn)
+		if err != nil {
+			c.lastError = err
+			c.lock.Unlock()
+			return
 		}
-	default:
-		c.lastError = fmt.Errorf("[Client.readThread] unknow msg type %d", outMsg.typ)
-		return
+		switch outMsg.typ {
+		case stCMD_RESPONSE, stEVENT_CONFIRM:
+			c.responseChan <- outMsg
+		case stEVENT:
+			handler := c.eventHandlers[outMsg.name]
+			if handler != nil {
+				handler(outMsg.msg)
+			}
+		default:
+			c.lastError = fmt.Errorf("[Client.readThread] unknow msg type %d", outMsg.typ)
+			c.lock.Unlock()
+			return
+		}
+		c.lock.Unlock()
 	}
 }
