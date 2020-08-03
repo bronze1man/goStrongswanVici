@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -22,9 +23,13 @@ type ClientConn struct {
 	// ReadTimeout specifies a time limit for requests made
 	// by this client.
 	ReadTimeout time.Duration
+
+	lock sync.RWMutex
 }
 
 func (c *ClientConn) Close() error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	close(c.responseChan)
 	c.lastError = io.ErrClosedPipe
 	return c.conn.Close()
@@ -51,6 +56,8 @@ func NewClientConnFromDefaultSocket() (client *ClientConn, err error) {
 }
 
 func (c *ClientConn) Request(apiname string, request map[string]interface{}) (response map[string]interface{}, err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	err = writeSegment(c.conn, segment{
 		typ:  stCMD_REQUEST,
 		name: apiname,
@@ -84,6 +91,8 @@ func (c *ClientConn) readResponse() segment {
 }
 
 func (c *ClientConn) RegisterEvent(name string, handler func(response map[string]interface{})) (err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	if c.eventHandlers[name] != nil {
 		return fmt.Errorf("[event %s] register a event twice.", name)
 	}
@@ -111,6 +120,8 @@ func (c *ClientConn) RegisterEvent(name string, handler func(response map[string
 }
 
 func (c *ClientConn) UnregisterEvent(name string) (err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	err = writeSegment(c.conn, segment{
 		typ:  stEVENT_UNREGISTER,
 		name: name,
@@ -133,22 +144,29 @@ func (c *ClientConn) UnregisterEvent(name string) (err error) {
 
 func (c *ClientConn) readThread() {
 	for {
-		outMsg, err := readSegment(c.conn)
-		if err != nil {
-			c.lastError = err
-			return
+		c.read(c.conn)
+	}
+}
+
+func (c *ClientConn) read(net.Conn) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	outMsg, err := readSegment(c.conn)
+	if err != nil {
+		c.lastError = err
+		return
+	}
+	switch outMsg.typ {
+	case stCMD_RESPONSE, stEVENT_CONFIRM:
+		c.responseChan <- outMsg
+	case stEVENT:
+		handler := c.eventHandlers[outMsg.name]
+		if handler != nil {
+			handler(outMsg.msg)
 		}
-		switch outMsg.typ {
-		case stCMD_RESPONSE, stEVENT_CONFIRM:
-			c.responseChan <- outMsg
-		case stEVENT:
-			handler := c.eventHandlers[outMsg.name]
-			if handler != nil {
-				handler(outMsg.msg)
-			}
-		default:
-			c.lastError = fmt.Errorf("[Client.readThread] unknow msg type %d", outMsg.typ)
-			return
-		}
+	default:
+		c.lastError = fmt.Errorf("[Client.readThread] unknow msg type %d", outMsg.typ)
+		return
 	}
 }
