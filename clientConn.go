@@ -56,8 +56,6 @@ func NewClientConnFromDefaultSocket() (client *ClientConn, err error) {
 }
 
 func (c *ClientConn) Request(apiname string, request map[string]interface{}) (response map[string]interface{}, err error) {
-	c.lock.Lock()
-	defer c.lock.Unlock()
 	err = writeSegment(c.conn, segment{
 		typ:  stCMD_REQUEST,
 		name: apiname,
@@ -67,10 +65,12 @@ func (c *ClientConn) Request(apiname string, request map[string]interface{}) (re
 		fmt.Printf("error writing segment \n")
 		return
 	}
-
 	outMsg := c.readResponse()
-	if c.lastError != nil {
-		return nil, c.lastError
+	c.lock.RLock()
+	err = c.lastError
+	defer c.lock.RUnlock()
+	if err != nil {
+		return nil, err
 	}
 	if outMsg.typ != stCMD_RESPONSE {
 		return nil, fmt.Errorf("[%s] response error %d", apiname, outMsg.typ)
@@ -144,9 +144,9 @@ func (c *ClientConn) UnregisterEvent(name string) (err error) {
 
 func (c *ClientConn) readThread() {
 	for {
-		c.lock.Lock()
 		outMsg, err := readSegment(c.conn)
 		if err != nil {
+			c.lock.Lock()
 			c.lastError = err
 			c.lock.Unlock()
 			return
@@ -155,15 +155,17 @@ func (c *ClientConn) readThread() {
 		case stCMD_RESPONSE, stEVENT_CONFIRM:
 			c.responseChan <- outMsg
 		case stEVENT:
+			c.lock.Lock()
 			handler := c.eventHandlers[outMsg.name]
+			c.lock.Unlock()
 			if handler != nil {
 				handler(outMsg.msg)
 			}
 		default:
+			c.lock.Lock()
 			c.lastError = fmt.Errorf("[Client.readThread] unknow msg type %d", outMsg.typ)
 			c.lock.Unlock()
 			return
 		}
-		c.lock.Unlock()
 	}
 }
