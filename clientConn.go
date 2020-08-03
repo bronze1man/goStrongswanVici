@@ -68,7 +68,7 @@ func (c *ClientConn) Request(apiname string, request map[string]interface{}) (re
 	outMsg := c.readResponse()
 	c.lock.RLock()
 	err = c.lastError
-	defer c.lock.RUnlock()
+	c.lock.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,9 @@ func (c *ClientConn) readResponse() segment {
 		return outMsg
 	case <-time.After(c.ReadTimeout):
 		if c.lastError == nil {
+			c.lock.Lock()
 			c.lastError = fmt.Errorf("Timeout waiting for message response")
+			c.lock.Unlock()
 		}
 		return segment{}
 	}
