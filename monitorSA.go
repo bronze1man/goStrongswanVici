@@ -31,6 +31,7 @@ type EventIkeSAUpDown struct {
 	Remote_id     string                         `json:"remote-id"`
 	Remote_host   string                         `json:"remote-host"`
 	Remote_port   string                         `json:"remote-port"`
+	Remote_vips   []string                       `json:"remote-vips"`
 	Responder_spi string                         `json:"responder-spi"`
 	State         string                         `json:"state"`
 	Task_Active   []string                       `json:"tasks-active"`
@@ -40,28 +41,28 @@ type EventIkeSAUpDown struct {
 }
 
 type EventChildSAUpDown struct {
-	Bytes_in     string   `json:"bytes-in"`
-	Bytes_out    string   `json:"bytes-out"`
-	Encap        string   `json:"encap"`
-	Encr_alg     string   `json:"encr-alg"`
-	Encr_keysize string   `json:"encr-keysize"`
-	Integ_alg    string   `json:"integ-alg"`
-	Install_time string   `json:"install-time"`
-	Life_time    string   `json:"life-time"`
-	Local_ts     []string `json:"local-ts"`
-	Mode         string   `json:"mode"`
-	Name         string   `json:"name"`
-	Protocol     string   `json:"protocol"`
-	Packets_out  string   `json:"packets-out"`
-	Packets_in   string   `json:"packets-in"`
-	Rekey_time   string   `json:"rekey-time"`
-	Remote_ts    []string `json:"remote-ts"`
-	Reqid        string   `json:"reqid"`
-	Spi_in       string   `json:"spi-in"`
-	Spi_out      string   `json:"spi-out"`
-	State        string   `json:"state"`
-	UniqueId     string   `json:"uniqueid"`
-	Remote_eap_id string                         `json:"remote-eap-id"` // client user name
+	Bytes_in      string   `json:"bytes-in"`
+	Bytes_out     string   `json:"bytes-out"`
+	Encap         string   `json:"encap"`
+	Encr_alg      string   `json:"encr-alg"`
+	Encr_keysize  string   `json:"encr-keysize"`
+	Integ_alg     string   `json:"integ-alg"`
+	Install_time  string   `json:"install-time"`
+	Life_time     string   `json:"life-time"`
+	Local_ts      []string `json:"local-ts"`
+	Mode          string   `json:"mode"`
+	Name          string   `json:"name"`
+	Protocol      string   `json:"protocol"`
+	Packets_out   string   `json:"packets-out"`
+	Packets_in    string   `json:"packets-in"`
+	Rekey_time    string   `json:"rekey-time"`
+	Remote_ts     []string `json:"remote-ts"`
+	Reqid         string   `json:"reqid"`
+	Spi_in        string   `json:"spi-in"`
+	Spi_out       string   `json:"spi-out"`
+	State         string   `json:"state"`
+	UniqueId      string   `json:"uniqueid"`
+	Remote_eap_id string   `json:"remote-eap-id"` // client user name
 }
 
 type EventIkeRekeyPair struct {
@@ -87,12 +88,14 @@ type EventIkeRekeySA struct {
 	Remote_id     string                          `json:"remote-id"`
 	Remote_host   string                          `json:"remote-host"`
 	Remote_port   string                          `json:"remote-port"`
+	Remote_vips   []string                        `json:"remote-vips"`
 	Responder_spi string                          `json:"responder-spi"`
 	State         string                          `json:"state"`
 	Task_Active   []string                        `json:"tasks-active"`
 	Task_Passive  []string                        `json:"tasks-passive"`
 	Uniqueid      string                          `json:"uniqueid"`
 	Version       string                          `json:"version"`
+	Remote_eap_id string                          `json:"remote-eap-id"` // client user name
 }
 
 type EventChildRekeyPair struct {
@@ -162,11 +165,10 @@ func prettyprint(b []byte) string {
 
 type monitorCallBack func(event string, info interface{})
 
-
 func handleIkeUpDown(eventName string, callback monitorCallBack, response map[string]interface{}) {
 	event := &EventIkeUpDown{}
 	event.Ike = map[string]*EventIkeSAUpDown{}
-	//we need to marshall all ikes manual because json uses connections names as key
+	// we need to marshall all ikes manual because json uses connections names as key
 	for name := range response {
 		value := response[name]
 		if name == "up" {
@@ -183,7 +185,7 @@ func handleIkeUpDown(eventName string, callback monitorCallBack, response map[st
 func handleIkeRekey(eventName string, callback monitorCallBack, response map[string]interface{}) {
 	event := &EventIkeRekey{}
 	event.Ike = map[string]*EventIkeRekeyPair{}
-	//we need to marshall all ikes manual because json uses connections names as key
+	// we need to marshall all ikes manual because json uses connections names as key
 	for name := range response {
 		value := response[name]
 		sa := &EventIkeRekeyPair{}
@@ -196,7 +198,7 @@ func handleIkeRekey(eventName string, callback monitorCallBack, response map[str
 func handleChildUpDown(eventName string, callback monitorCallBack, response map[string]interface{}) {
 	event := &EventChildUpDown{}
 	event.Ike = map[string]*EventIkeSAUpDown{}
-	//we need to marshall all ikes manual because json uses connections names as key
+	// we need to marshall all ikes manual because json uses connections names as key
 	for name := range response {
 		value := response[name]
 		if name == "up" {
@@ -213,7 +215,7 @@ func handleChildUpDown(eventName string, callback monitorCallBack, response map[
 func handleChildRekey(eventName string, callback monitorCallBack, response map[string]interface{}) {
 	event := &EventChildRekey{}
 	event.Ike = map[string]*EventIkeRekeySA{}
-	//we need to marshall all ikes manual because json uses connections names as key
+	// we need to marshall all ikes manual because json uses connections names as key
 	for name := range response {
 		value := response[name]
 		sa := &EventIkeRekeySA{}
@@ -223,28 +225,28 @@ func handleChildRekey(eventName string, callback monitorCallBack, response map[s
 	callback(eventName, event)
 }
 
-func (c *ClientConn) MonitorSA(callback monitorCallBack,watchdog time.Duration) (err error) {
-	//register event
+func (c *ClientConn) MonitorSA(callback monitorCallBack, watchdog time.Duration) (err error) {
+	// register event
 	c.RegisterEvent(EVENT_CHILD_UPDOWN, func(response map[string]interface{}) {
-		//dumpResponse(response)
+		// dumpResponse(response)
 		handleChildUpDown(EVENT_CHILD_UPDOWN, callback, response)
 	})
 	c.RegisterEvent(EVENT_CHILD_REKEY, func(response map[string]interface{}) {
-		//dumpResponse(response)
+		// dumpResponse(response)
 		handleChildRekey(EVENT_CHILD_REKEY, callback, response)
 	})
 	c.RegisterEvent(EVENT_IKE_UPDOWN, func(response map[string]interface{}) {
-		//dumpResponse(response)
+		// dumpResponse(response)
 		handleIkeUpDown(EVENT_IKE_UPDOWN, callback, response)
 	})
 	c.RegisterEvent(EVENT_IKE_REKEY, func(response map[string]interface{}) {
-		//dumpResponse(response)
+		// dumpResponse(response)
 		handleIkeRekey(EVENT_IKE_REKEY, callback, response)
 	})
 
 	for {
 		time.Sleep(watchdog)
-		//collect some daemon stats to see if connection is alive
+		// collect some daemon stats to see if connection is alive
 		if _, err := c.Stats(); err != nil {
 			return err
 		}
