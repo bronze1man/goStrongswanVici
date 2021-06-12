@@ -31,6 +31,7 @@ type IkeSa struct {
 	Reauth_time     string               `json:"reauth-time"`
 	Remote_vips     []string             `json:"remote-vips"`
 	Child_sas       map[string]Child_sas `json:"child-sas"` //key means child-sa-name(conn name in ipsec.conf)
+	Tasks_active    []string             `json:"tasks-active"`
 }
 
 type Child_sas struct {
@@ -73,6 +74,23 @@ func (s *Child_sas) GetBytesIn() uint64 {
 
 func (s *Child_sas) GetBytesOut() uint64 {
 	num, err := strconv.ParseUint(s.Bytes_out, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+
+func (s *Child_sas) GetPacketsIn() uint64 {
+	num, err := strconv.ParseUint(s.Packets_in, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+func (s *Child_sas) GetPacketsOut() uint64 {
+	num, err := strconv.ParseUint(s.Packets_out, 10, 64)
 	if err != nil {
 		return 0
 	}
