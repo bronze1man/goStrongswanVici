@@ -16,7 +16,8 @@ type IkeSa struct {
 	Remote_host     string               `json:"remote-host"`
 	Remote_port     string               `json:"remote-port"`
 	Remote_id       string               `json:"remote-id"`
-	Remote_xauth_id string               `json:"remote-xauth-id"` //client username
+	Remote_xauth_id string               `json:"remote-xauth-id"` //client username for ikev1
+	Remote_eap_id   string               `json:"remote-eap-id"`   //client username for ikev2
 	Initiator       string               `json:"initiator"`
 	Initiator_spi   string               `json:"initiator-spi"`
 	Responder_spi   string               `json:"responder-spi"`
@@ -80,7 +81,6 @@ func (s *Child_sas) GetBytesOut() uint64 {
 	}
 	return num
 }
-
 
 func (s *Child_sas) GetPacketsIn() uint64 {
 	num, err := strconv.ParseUint(s.Packets_in, 10, 64)
