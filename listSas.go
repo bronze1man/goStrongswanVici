@@ -32,6 +32,7 @@ type IkeSa struct {
 	Remote_vips     []string             `json:"remote-vips"`
 	Child_sas       map[string]Child_sas `json:"child-sas"` //key means child-sa-name(conn name in ipsec.conf)
 	Tasks_active    []string             `json:"tasks-active"`
+	Tasks_queued    []string             `json:"tasks-queued"`
 }
 
 type Child_sas struct {
