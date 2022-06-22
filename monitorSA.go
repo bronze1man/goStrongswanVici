@@ -35,6 +35,7 @@ type EventIkeSAUpDown struct {
 	Responder_spi string                         `json:"responder-spi"`
 	State         string                         `json:"state"`
 	Task_Active   []string                       `json:"tasks-active"`
+	Task_Passive  []string                       `json:"tasks-passive"`
 	Uniqueid      string                         `json:"uniqueid"`
 	Version       string                         `json:"version"`
 	Remote_eap_id string                         `json:"remote-eap-id"` // client user name
