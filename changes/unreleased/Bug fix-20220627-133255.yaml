@@ -1,0 +1,6 @@
+kind: Bug fix
+body: ClientConn - avoid readThread() trying accessing an invalid channel
+time: 2022-06-27T13:32:55.966865+03:00
+custom:
+  JiraID: "12872"
+  PR: "1"
