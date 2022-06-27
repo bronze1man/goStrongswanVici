@@ -30,7 +30,6 @@ type ClientConn struct {
 func (c *ClientConn) Close() error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	close(c.responseChan)
 	c.lastError = io.ErrClosedPipe
 
 	return c.conn.Close()
@@ -174,6 +173,8 @@ func (c *ClientConn) UnregisterEvent(name string) (err error) {
 }
 
 func (c *ClientConn) readThread() {
+	defer close(c.responseChan)
+
 	for {
 		outMsg, err := readSegment(c.conn)
 		if err != nil {
