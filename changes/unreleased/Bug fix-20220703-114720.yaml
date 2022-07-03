@@ -1,0 +1,6 @@
+kind: Bug fix
+body: change the name of the module
+time: 2022-07-03T11:47:20.880693+03:00
+custom:
+  JiraID: "12872"
+  PR: "2"
