@@ -5,18 +5,18 @@ import (
 	"strconv"
 )
 
-//from list-sa event
+// from list-sa event
 type IkeSa struct {
-	Uniqueid        string               `json:"uniqueid"` //called ike_id in terminate() argument.
+	Uniqueid        string               `json:"uniqueid"` // called ike_id in terminate() argument.
 	Version         string               `json:"version"`
-	State           string               `json:"state"` //had saw: ESTABLISHED
+	State           string               `json:"state"` // had saw: ESTABLISHED
 	Local_host      string               `json:"local-host"`
 	Local_port      string               `json:"local-port"`
 	Local_id        string               `json:"local-id"`
 	Remote_host     string               `json:"remote-host"`
 	Remote_port     string               `json:"remote-port"`
 	Remote_id       string               `json:"remote-id"`
-	Remote_xauth_id string               `json:"remote-xauth-id"` //client username
+	Remote_xauth_id string               `json:"remote-xauth-id"` // client username
 	Initiator       string               `json:"initiator"`
 	Initiator_spi   string               `json:"initiator-spi"`
 	Responder_spi   string               `json:"responder-spi"`
@@ -30,15 +30,15 @@ type IkeSa struct {
 	Rekey_time      string               `json:"rekey-time"`
 	Reauth_time     string               `json:"reauth-time"`
 	Remote_vips     []string             `json:"remote-vips"`
-	Child_sas       map[string]Child_sas `json:"child-sas"` //key means child-sa-name(conn name in ipsec.conf)
+	Child_sas       map[string]Child_sas `json:"child-sas"` // key means child-sa-name(conn name in ipsec.conf)
 	Tasks_active    []string             `json:"tasks-active"`
 	Tasks_queued    []string             `json:"tasks-queued"`
 }
 
 type Child_sas struct {
 	Reqid         string   `json:"reqid"`
-	State         string   `json:"state"` //had saw: INSTALLED
-	Mode          string   `json:"mode"`  //had saw: TUNNEL
+	State         string   `json:"state"` // had saw: INSTALLED
+	Mode          string   `json:"mode"`  // had saw: TUNNEL
 	Protocol      string   `json:"protocol"`
 	Encap         string   `json:"encap"`
 	Spi_in        string   `json:"spi-in"`
@@ -52,7 +52,7 @@ type Child_sas struct {
 	Prf_alg       string   `json:"prf-alg"`
 	Dh_group      string   `json:"dh-group"`
 	Esn           string   `json:"esn"`
-	Bytes_in      string   `json:"bytes-in"` //bytes into this machine
+	Bytes_in      string   `json:"bytes-in"` // bytes into this machine
 	Packets_in    string   `json:"packets-in"`
 	Use_in        string   `json:"use-in"`
 	Bytes_out     string   `json:"bytes-out"` // bytes out of this machine
@@ -81,7 +81,6 @@ func (s *Child_sas) GetBytesOut() uint64 {
 	return num
 }
 
-
 func (s *Child_sas) GetPacketsIn() uint64 {
 	num, err := strconv.ParseUint(s.Packets_in, 10, 64)
 	if err != nil {
@@ -104,17 +103,26 @@ func (s *Child_sas) GetPacketsOut() uint64 {
 func (c *ClientConn) ListSas(ike string, ike_id string) (sas []map[string]IkeSa, err error) {
 	sas = []map[string]IkeSa{}
 	var eventErr error
-	//register event
+
+	defer func() {
+		err = c.UnregisterEvent("list-sa")
+		if err != nil {
+			err = fmt.Errorf("error unregistering list-sa event: %v", err)
+		}
+	}()
+
+	// register event
 	err = c.RegisterEvent("list-sa", func(response map[string]interface{}) {
 		sa := &map[string]IkeSa{}
 		err = ConvertFromGeneral(response, sa)
 		if err != nil {
 			fmt.Printf("list-sa event error: %s\n", err)
-			eventErr = err
+			eventErr = fmt.Errorf("list-sa event error: %w", err)
+
 			return
 		}
 		sas = append(sas, *sa)
-		//fmt.Printf("event %#v\n", response)
+		// fmt.Printf("event %#v\n", response)
 	})
 	if err != nil {
 		return
@@ -134,20 +142,17 @@ func (c *ClientConn) ListSas(ike string, ike_id string) (sas []map[string]IkeSa,
 	if err != nil {
 		return
 	}
-	//fmt.Printf("request finish %#v\n", sas)
-	err = c.UnregisterEvent("list-sa")
-	if err != nil {
-		return
-	}
+	// fmt.Printf("request finish %#v\n", sas)
+
 	return
 }
 
-//a vpn conn in the strongswan server
+// a vpn conn in the strongswan server
 type VpnConnInfo struct {
 	IkeSa
 	Child_sas
-	IkeSaName   string //looks like conn name in ipsec.conf, content is same as ChildSaName
-	ChildSaName string //looks like conn name in ipsec.conf
+	IkeSaName   string // looks like conn name in ipsec.conf, content is same as ChildSaName
+	ChildSaName string // looks like conn name in ipsec.conf
 }
 
 func (c *VpnConnInfo) GuessUserName() string {
@@ -176,9 +181,9 @@ func (c *ClientConn) ListAllVpnConnInfo() (list []VpnConnInfo, err error) {
 		for ikeSaName, ikeSa := range sa {
 			info.IkeSaName = ikeSaName
 			info.IkeSa = ikeSa
-			//if len(ikeSa.Child_sas) != 1 {
+			// if len(ikeSa.Child_sas) != 1 {
 			//	fmt.Println("[vici.ListAllVpnConnInfo] warning: len(ikeSa.Child_sas)[%d]!=1", len(ikeSa.Child_sas))
-			//}
+			// }
 			for childSaName, childSa := range ikeSa.Child_sas {
 				info.ChildSaName = childSaName
 				info.Child_sas = childSa

@@ -79,7 +79,7 @@ func (c *ClientConn) Request(apiname string, request map[string]interface{}) (re
 	c.lock.RUnlock()
 
 	if outMsg.typ != stCMD_RESPONSE {
-		return nil, fmt.Errorf("[%s] response error %d", apiname, outMsg.typ)
+		return nil, fmt.Errorf("[%s] response error %d, msg: %s", apiname, outMsg.typ, outMsg.msg)
 	}
 
 	return outMsg.msg, nil
@@ -103,8 +103,10 @@ func (c *ClientConn) readResponse() segment {
 func (c *ClientConn) RegisterEvent(name string, handler func(response map[string]interface{})) (err error) {
 	c.lock.Lock()
 	if c.eventHandlers[name] != nil {
+		delete(c.eventHandlers, name)
 		c.lock.Unlock()
-		return fmt.Errorf("[event %s] register a event twice.", name)
+
+		return fmt.Errorf("[event %s] registered an event twice - released existing handler lock", name)
 	}
 
 	c.eventHandlers[name] = handler
@@ -135,7 +137,7 @@ func (c *ClientConn) RegisterEvent(name string, handler func(response map[string
 		delete(c.eventHandlers, name)
 		c.lock.Unlock()
 
-		return fmt.Errorf("[event %s] response error %d", name, outMsg.typ)
+		return fmt.Errorf("[event %s] response error %d, msg: %s", name, outMsg.typ, outMsg.msg)
 	}
 	c.lock.Unlock()
 
@@ -143,31 +145,39 @@ func (c *ClientConn) RegisterEvent(name string, handler func(response map[string
 }
 
 func (c *ClientConn) UnregisterEvent(name string) (err error) {
+	c.lock.Lock()
 	err = writeSegment(c.conn, segment{
 		typ:  stEVENT_UNREGISTER,
 		name: name,
 	})
 	if err != nil {
-		return
-	}
-
-	outMsg := c.readResponse()
-	// fmt.Printf("UnregisterEvent %#v\n", outMsg)
-	c.lock.Lock()
-	if c.lastError != nil {
+		delete(c.eventHandlers, name)
 		c.lock.Unlock()
 
-		return c.lastError
+		return fmt.Errorf("[event %s] failed to write event unregister. error: %w", name, err)
 	}
+
+	c.lock.Unlock()
+	outMsg := c.readResponse()
+	c.lock.Lock()
+
+	// fmt.Printf("UnregisterEvent %#v\n", outMsg)
+	if c.lastError != nil {
+		delete(c.eventHandlers, name)
+		c.lock.Unlock()
+
+		return fmt.Errorf("[event %s] failed to read response on unregister %d, response: %s. error: %w",
+			name, outMsg.typ, outMsg.msg, c.lastError)
+	}
+
+	delete(c.eventHandlers, name)
 	c.lock.Unlock()
 
 	if outMsg.typ != stEVENT_CONFIRM {
-		return fmt.Errorf("[event %s] response error %d", name, outMsg.typ)
-	}
 
-	c.lock.Lock()
-	delete(c.eventHandlers, name)
-	c.lock.Unlock()
+		return fmt.Errorf("[event %s] response error %d, expected event confim type, msg: %s",
+			name, outMsg.typ, outMsg.msg)
+	}
 
 	return nil
 }
@@ -198,7 +208,7 @@ func (c *ClientConn) readThread() {
 			}
 		default:
 			c.lock.Lock()
-			c.lastError = fmt.Errorf("[Client.readThread] unknow msg type %d", outMsg.typ)
+			c.lastError = fmt.Errorf("[Client.readThread] unknown msg type %d", outMsg.typ)
 			c.lock.Unlock()
 
 			return
