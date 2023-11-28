@@ -1,5 +1,5 @@
 strongswan vici golang client
-=============================
+============================= 
 [![Build Status](https://travis-ci.org/bronze1man/goStrongswanVici.svg)](https://travis-ci.org/bronze1man/goStrongswanVici)
 [![GoDoc](https://godoc.org/github.com/bronze1man/goStrongswanVici?status.svg)](https://godoc.org/github.com/bronze1man/goStrongswanVici)
 [![docs examples](https://sourcegraph.com/api/repos/github.com/bronze1man/goStrongswanVici/badges/docs-examples.png)](https://sourcegraph.com/github.com/bronze1man/goStrongswanVici)
@@ -11,8 +11,13 @@ strongswan vici golang client
 
 a golang implement of strongswan vici plugin client.
 
+* GoStrongswanVici is not no longer actively maintained.
+* It is not compatible to current strongswan version like 5.8.2 . (https://github.com/bronze1man/goStrongswanVici/issues/46)
+* You can try https://github.com/strongswan/govici/ .
+
 ### document
 * http://godoc.org/github.com/bronze1man/goStrongswanVici
+* https://docs.strongswan.org/docs/5.9/plugins/vici.html
 * https://github.com/strongswan/strongswan/tree/master/src/libcharon/plugins/vici
 
 ### Implemented command list
